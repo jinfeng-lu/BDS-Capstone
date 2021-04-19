@@ -63,7 +63,7 @@ ui <- shinyUI(fluidPage(
       
       tabItems(
         tabItem(tabName = "mod1",
-                includeMarkdown("www/module1.md")
+                includeMarkdown("www/module1.md") # Text instructions
         ),
         tabItem(tabName = "mod2",
                 includeMarkdown("www/module2.md")
