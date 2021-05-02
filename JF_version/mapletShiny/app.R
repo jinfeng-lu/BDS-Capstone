@@ -208,64 +208,79 @@ obj_name$name <- ifelse(is.na(obj_name$name), "(no stat_name)", obj_name$name)
 ########################################################################## 
 
 library(shiny)
+library(shinythemes)
 library(DT)
-# Help text CSS style
-help_text_css <- "font-size:20px;"
-# Help text for Module 1
-mod1_help_text <- "Module 1 requires extracting all the result objects. Users can assess results in a drop-down
-menu that offers a list of a statname and a plot type (e.g. “missingness”, “pval”)."
+
 # Define UI for application
-ui <- navbarPage(
-    # Application title
-    title = "Maplet",
+ui <- fluidPage(
+  # remove shiny "red" warning messages on GUI
+  tags$style(type="text/css",
+             ".shiny-output-error { visibility: hidden; }",
+             ".shiny-output-error:before { visibility: hidden; }"
+  ),
+  navbarPage(
+  # embed Maplet logo and title
+  title = div(img(src='logo.png',
+                  style="margin-top: -10px; padding-right: 10px; padding-bottom: 10px",
+                  height = 60),
+              "BDS Capstone Maplet"),
+  # sticky tabs while scrolling main panel
+  position = c("fixed-top"),
+  # set page theme
+  theme = shinytheme("lumen"),
     # Six Head tabs to accommodate for navigation and comparison between modules
-    tabPanel("Module 1", value = "mod1",
-             tags$head( ## Write global CSS in header
-                 tags$style("html, body {height: 100%; width: 100%}"),
-                 tags$style("#mod1_panel1 {position: fixed}"),
-                 # scrollable panel when multiple plots extend the grid
-                 tags$style("#mod1_panel2 {overflow: auto; width: 80%}"),
-                 tags$style("#mod1_panel3 {overflow: auto; width: 80%}")
-             ),
+    tabPanel("Module 1", 
              absolutePanel(id = "mod1_panel1",
-                           # sidebar account for left 20%
-                           width = "20%", right = "80%",
-                           helpText( ## some help text
-                               strong(mod1_help_text),
-                               style = help_text_css
-                           ),
+                           # sidebar autoscroll with main panel
+                           style = "position:fixed; width: 20%;",
                            br(),   ## blank row
+                           br(),   
+                           br(),   
+                           tags$p(
+                             HTML("<b>Hint:</b> Module 1 requires extracting all the result objects."
+                             )),
+                           tags$p(
+                             HTML("Users can assess results in a drop-down menu that offers a list of a statname and a plot type (e.g. “missingness”, “pval”)."
+                             )),
+                           br(),   
                            # select one stat_name
                            selectInput("mod1_select_statname", "Select one stat name:", 
                                        choices = distinct(obj_name, name)$name,
                                        width = "220px"
                            ),
-                           br(),   ## blank row
+                           br(),   
                            # select plot type or stats table
                            radioButtons("mod1_radio", "Select output type:",
                                         choices = list("Plot" = "plots", 
                                                        "Table" = "stats"),
                                         selected = "plots"
                            ),
-                           br(),   ## blank row
+                           br(),   
                            # define one UI object to select output type
                            uiOutput("mod1_select_object_ui"),
+                           br(),
                            # delay the output
                            actionButton("mod1_go", "Update")
              ), 
              conditionalPanel(id = "mod1_panel2", 
                               # Only show this panel if the plot type is selected
                               condition = "input.mod1_radio=='plots'",
-                              # aligned to right
-                              style = "overflow-y: auto; position: absolute; right: 0",
+                              # scrollable panel
+                              style = "overflow-y: auto; position: absolute; width: 80%; left: 25%",
+                              br(), 
+                              br(), 
+                              br(), 
                               # dynamic number of plots
                               uiOutput('mod1_plot')
              ),
              conditionalPanel(id = "mod1_panel3", 
                               # Only show this panel if the table type is selected
                               condition = "input.mod1_radio=='stats'",
-                              # aligned to right
-                              style = "overflow-y: auto; position: absolute; right: 0",
+                              # scrollable panel
+                              style = "overflow-y: auto; position: absolute; width: 80%; left: 25%",
+                              br(), 
+                              br(), 
+                              br(), 
                               dataTableOutput('mod1_table')
              )
     ), 
@@ -274,6 +289,7 @@ ui <- navbarPage(
     tabPanel("Module 4", "contents"),
     tabPanel("Module 5", "contents"),
     tabPanel("Module 6", "contents")
+)
 )
 
 # Define server logic required to draw outputs
