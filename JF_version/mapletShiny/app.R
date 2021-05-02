@@ -3,7 +3,6 @@
 ########################################################################## 
 library(maplet)
 library(tidyverse)
-library(gridExtra)
 
 purrr::zap()
 
@@ -181,20 +180,24 @@ D1 <- D1 %>%
     mt_post_multtest(stat_name="missingness", method="BH") %>%
     {.}
 
-# Extract all the object names for accessor
+########################################################################## 
+######################## build the Shiny App #############################
+########################################################################## 
+
+# Extract all the object names for accessor functions
 obj_list <- data.frame()
 for (i in seq_along(metadata(D1)$results)) {
-    for (j in seq_along(metadata(D1)$results[[i]]$fun)) {
-        obj_list[i, j] <- metadata(D1)$results[[i]]$fun[j]
-    }
+  for (j in seq_along(metadata(D1)$results[[i]]$fun)) {
+    obj_list[i, j] <- metadata(D1)$results[[i]]$fun[j]
+  }
 }
 
 # Extract all the stat_name
 stat_name <- data.frame(name=NA)
 for (i in seq_along(metadata(D1)$results)) {
-    if ("stat_name" %in% names(metadata(D1)$results[[i]]$args)){
-        stat_name[i, 1] <- metadata(D1)$results[[i]]$args$stat_name
-    }
+  if ("stat_name" %in% names(metadata(D1)$results[[i]]$args)){
+    stat_name[i, 1] <- metadata(D1)$results[[i]]$args$stat_name
+  }
 }
 # distinct the not-null values
 # stat_name <- distinct(subset(stat_name, !is.na(name)), name)
@@ -203,10 +206,7 @@ for (i in seq_along(metadata(D1)$results)) {
 obj_name <- cbind(obj_list, stat_name)
 obj_name$name <- ifelse(is.na(obj_name$name), "(no stat_name)", obj_name$name)
 
-########################################################################## 
-######################## build the Shiny App #############################
-########################################################################## 
-
+# load packages
 library(shiny)
 library(shinythemes)
 library(DT)
@@ -231,16 +231,16 @@ ui <- fluidPage(
     # Six Head tabs to accommodate for navigation and comparison between modules
     tabPanel("Module 1", 
              absolutePanel(id = "mod1_panel1",
-                           # sidebar autoscroll with main panel
+                           # sidebar auto-scrolling with main panel
                            style = "position:fixed; width: 20%;",
                            br(),   ## blank row
                            br(),   
                            br(),   
                            tags$p(
-                             HTML("<b>Hint:</b> Module 1 requires extracting all the result objects."
+                             HTML("<b>Module 1</b> requires extracting all the result objects one at a time."
                              )),
                            tags$p(
-                             HTML("Users can assess results in a drop-down menu that offers a list of a statname and a plot type (e.g. “missingness”, “pval”)."
+                             HTML("Users can assess results in a drop-down menu that offers a list of a stat_name and a plot type (e.g. “missingness”, “pval”)."
                              )),
                            br(),   
                            # select one stat_name
@@ -258,6 +258,10 @@ ui <- fluidPage(
                            br(),   
                            # define one UI object to select output type
                            uiOutput("mod1_select_object_ui"),
+                           br(),
+                           tags$p(
+                             HTML("<b>Hint:</b> Outputs are delayed untill you click 'UPDATE' button after selection."
+                             )),
                            br(),
                            # delay the output
                            actionButton("mod1_go", "Update")
@@ -294,8 +298,11 @@ ui <- fluidPage(
                            br(),   
                            br(),   
                            tags$p(
-                             HTML("<b>Hint:</b> Module 3 requires generating an interactive 2D projection of PCA/UMAP and displaying a
+                             HTML("<b>Module 3</b> requires generating an interactive 2D projection of PCA/UMAP and displaying a
 drop-down menu of all colData columns for coloring."
+                             )),
+                           tags$p(
+                             HTML("It displays a drop-down menu of all colData columns for coloring."
                              )),
                            br(),   
                            # select one plot type
@@ -309,6 +316,10 @@ drop-down menu of all colData columns for coloring."
                                        choices = names(colData(D1)),
                                        width = "220px"
                            ),
+                           br(),
+                           tags$p(
+                             HTML("<b>Hint:</b> Outputs are delayed untill you click 'UPDATE' button after selection."
+                             )),
                            br(),
                            # delay the output
                            actionButton("mod2_go", "Update")
@@ -391,7 +402,7 @@ server <- function(input, output) {
             })
         })
     }
-    # render table
+    # render stats table of Mod1
     output$mod1_table <- renderDataTable({
         tables <- D1 %>% mtm_res_get_entries(mod1_output_object())
         datatable(tables[[1]]$output$table,
@@ -401,7 +412,7 @@ server <- function(input, output) {
                       pageLength =  15)
         )
     })
-    # render pca/umap in Mod2
+    # render pca/umap of Mod2
     output$mod2_plot <- renderPlot({
       if (mod2_output_object()[1]=="pca"){
         D1 %>% mt_plots_pca(scale_data = T, 
